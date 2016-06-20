@@ -22,7 +22,7 @@
     }
 
     if (!!window.EventSource) {
-      var source = newCoeditSource(instanceName);
+      var source = newCoeditSource(instanceName, "user-"+Math.floor(Math.random()*100000));
       log(source);
       source.addEventListener("message", function(e){
         log("MESSAGE:", e.data);
