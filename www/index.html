@@ -1,5 +1,6 @@
 <html>
 <head>
+  <script src="/coedit/lib/coedit.js"></script>
 </head>
 <body>
   <textarea id="log" disabled="disabled" style="height:100%; width: 100%">***** [Newest message on top] *****</textarea>
@@ -15,7 +16,7 @@
     }
 
     if (!!window.EventSource) {
-      var source = new EventSource("/coedit?s="+Math.floor(Math.random()*100000));
+      var source = newCoeditSource("yourInstanceNameGoesHere");
       log(source);
       source.addEventListener("message", function(e){
         log("MESSAGE:", e.data);

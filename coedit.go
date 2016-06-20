@@ -2,12 +2,18 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"time"
+
+	"github.com/gorilla/mux"
 )
 
 func init() {
-	http.Handle("/coedit", newCoedit())
+	r := mux.NewRouter()
+	http.Handle("/coedit/", r)
+	r.PathPrefix("/coedit/lib/").Handler(http.StripPrefix("/coedit/lib/", http.FileServer(http.Dir("js"))))
+	r.Path("/coedit/{id}").Handler(newCoedit())
 }
 
 type coeditHandler struct {
@@ -55,6 +61,9 @@ func (c *coeditHandler) handleClients() {
 }
 
 func (c *coeditHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	log.Printf("ServeHTTP for [%s]\n", id)
+
 	f, ok := w.(http.Flusher)
 	if !ok {
 		http.Error(w, "Not supported", http.StatusInternalServerError)
