@@ -5,6 +5,12 @@
 <body>
   <textarea id="log" disabled="disabled" style="height:100%; width: 100%">***** [Newest message on top] *****</textarea>
   <script>
+    var instanceName = window.location.search.substring(1);
+
+    if (instanceName == "") {
+      instanceName = "defaultInstanceNameBlah";
+    }
+
     function log() {
       console.log(arguments);
       var str = "";
@@ -16,7 +22,7 @@
     }
 
     if (!!window.EventSource) {
-      var source = newCoeditSource("yourInstanceNameGoesHere");
+      var source = newCoeditSource(instanceName);
       log(source);
       source.addEventListener("message", function(e){
         log("MESSAGE:", e.data);

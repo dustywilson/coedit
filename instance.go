@@ -1,4 +1,4 @@
-package main
+package coedit
 
 import (
 	"fmt"
@@ -9,58 +9,51 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func init() {
-	r := mux.NewRouter()
-	http.Handle("/coedit/", r)
-	r.PathPrefix("/coedit/lib/").Handler(http.StripPrefix("/coedit/lib/", http.FileServer(http.Dir("js"))))
-	r.Path("/coedit/{id}").Handler(newCoedit())
+type coeditInstance struct {
+	instanceMessage chan []byte
+	clients         map[chan []byte]bool
+	newClient       chan chan []byte
+	lostClient      chan chan []byte
 }
 
-type coeditHandler struct {
-	globalMessage chan []byte
-	clients       map[chan []byte]bool
-	newClient     chan chan []byte
-	lostClient    chan chan []byte
-}
-
-func newCoedit() *coeditHandler {
-	c := new(coeditHandler)
+func newCoeditInstance() *coeditInstance {
+	c := new(coeditInstance)
 	c.clients = make(map[chan []byte]bool)
-	c.globalMessage = make(chan []byte)
+	c.instanceMessage = make(chan []byte)
 	c.newClient = make(chan chan []byte)
 	c.lostClient = make(chan chan []byte)
 	go c.handleClients()
 	return c
 }
 
-func (c *coeditHandler) handleClients() {
+func (c *coeditInstance) handleClients() {
 	ticker := time.Tick(time.Second * 2)
 	for {
 		select {
 		case cl := <-c.newClient:
 			c.clients[cl] = true
 			go func() {
-				c.globalMessage <- []byte(fmt.Sprintf("A new client has connected.  Now at %d.", len(c.clients)))
+				c.instanceMessage <- []byte(fmt.Sprintf("A new client has connected.  Now at %d.", len(c.clients)))
 			}()
 		case cl := <-c.lostClient:
 			// should maybe clean something up?
 			delete(c.clients, cl)
 			go func() {
-				c.globalMessage <- []byte(fmt.Sprintf("A client has disconnected.  Now at %d.", len(c.clients)))
+				c.instanceMessage <- []byte(fmt.Sprintf("A client has disconnected.  Now at %d.", len(c.clients)))
 			}()
-		case m := <-c.globalMessage:
+		case m := <-c.instanceMessage:
 			for cl := range c.clients {
 				cl <- m
 			}
 		case <-ticker:
 			go func() {
-				c.globalMessage <- []byte("Tick")
+				c.instanceMessage <- []byte("Tick")
 			}()
 		}
 	}
 }
 
-func (c *coeditHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (c *coeditInstance) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	log.Printf("ServeHTTP for [%s]\n", id)
 
