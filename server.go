@@ -1,7 +1,6 @@
 package coedit
 
 import (
-	"log"
 	"net/http"
 	"sync"
 
@@ -12,18 +11,20 @@ func init() {
 	r := mux.NewRouter()
 	http.Handle("/coedit/", r)
 	r.PathPrefix("/coedit/lib/").Handler(http.StripPrefix("/coedit/lib/", http.FileServer(http.Dir("js"))))
-	r.Path("/coedit/{id}").Handler(newCoeditHandler())
+	h := newCoeditHandler()
+	r.Path("/coedit/{id}").Handler(h)
+	r.Path("/coedit/{id}/{key}").Handler(h)
 }
 
 type coeditHandler struct {
-	globalMessage chan []byte
+	globalMessage chan string
 	instancesLock sync.Mutex
 	instances     map[string]*coeditInstance
 }
 
 func newCoeditHandler() *coeditHandler {
 	h := new(coeditHandler)
-	h.globalMessage = make(chan []byte)
+	h.globalMessage = make(chan string)
 	h.instances = make(map[string]*coeditInstance)
 	go h.run()
 	return h
@@ -48,7 +49,6 @@ func (h *coeditHandler) run() {
 
 func (h *coeditHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
-	log.Printf("ServeHTTP for [%s]\n", id)
 
 	var c *coeditInstance
 

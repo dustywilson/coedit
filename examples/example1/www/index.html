@@ -16,7 +16,7 @@
       var str = "";
       for (var i=0; i<arguments.length; i++) {
         if (i > 0) str += " ";
-        str += arguments[i];
+        str += JSON.stringify(arguments[i]);
       }
       document.getElementById("log").value = str+"\n"+document.getElementById("log").value;
     }
@@ -25,7 +25,7 @@
       var source = newCoeditSource(instanceName, "user-"+Math.floor(Math.random()*100000));
       log(source);
       source.addEventListener("message", function(e){
-        log("MESSAGE:", e.data);
+        log("MESSAGE:", JSON.parse(e.data));
       }, false);
       source.addEventListener("open", function(e){
         log("OPEN:", e);
